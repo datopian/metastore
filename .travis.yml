@@ -1,0 +1,26 @@
+language:
+  python
+
+python:
+  - 3.6
+
+services:
+    - elasticsearch
+
+env:
+    global:
+        - DATAHUB_ELASTICSEARCH_ADDRESS=localhost:9200
+
+install:
+  - pip install --upgrade -r requirements.dev.txt
+
+before_script:
+  - sleep 30
+  - curl localhost:9200
+
+script:
+  - pylama metastore
+  - python -m pytest tests -sv --cov=metastore
+
+after_success:
+  - coveralls

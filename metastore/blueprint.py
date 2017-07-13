@@ -7,6 +7,7 @@ from . import controllers
 
 PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
 
+
 def create():
     """Create blueprint.
     """

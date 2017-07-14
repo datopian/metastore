@@ -19,7 +19,7 @@ def create():
     search_controller = controllers.search
 
     def search(kind):
-        token = request.values.get('jwt')
+        token = request.headers.get('auth-token') or request.values.get('jwt')
         userid = None
         try:
             if token is not None:

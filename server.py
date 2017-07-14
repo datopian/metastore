@@ -7,8 +7,6 @@ app = metastore.create()
 
 # Port to listen
 port = os.environ.get('PORT') or 5000
-if len(sys.argv) > 1:
-    port = int(sys.argv[1])
 
 # Debug mode flag
 debug = True

@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_cors import CORS
-from flask_session import Session
 from .blueprint import create as search
 
 def create():
@@ -13,14 +12,7 @@ def create():
 
     # CORS support
     CORS(app, supports_credentials=True)
-
-    # Session
-    sess = Session()
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SECRET_KEY'] = 'DataHub rocks'
-    sess.init_app(app)
-
-    app.register_blueprint(search(), url_prefix='/package/')
+    app.register_blueprint(search(), url_prefix='/metastore/')
 
     # Return application
     return app

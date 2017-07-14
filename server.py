@@ -14,4 +14,5 @@ if len(sys.argv) > 1:
 debug = True
 
 # Run application
-app.run(host='0.0.0.0', port=port, debug=debug)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=port, debug=debug)

@@ -8,18 +8,14 @@ from elasticsearch.exceptions import NotFoundError
 _engine = None
 
 ENABLED_SEARCHES = {
-    'package': {
-        'index': 'packages',
-        'doc_type': 'package',
-        'owner': 'package.owner',
-        'private': 'package.private',
-        'q_fields': ['package.title',
-                     'package.author',
-                     'package.owner',
-                     'package.description',
-                     'package.regionCode',
-                     'package.countryCode',
-                     'package.cityCode'],
+    'dataset': {
+        'index': 'datasets',
+        'doc_type': 'dataset',
+        'owner': 'dataset.owner',
+        'private': 'dataset.private',
+        'q_fields': ['dataset.title',
+                     'dataset.owner',
+                     'dataset.description'],
     }
 }
 
@@ -85,10 +81,8 @@ def build_dsl(kind_params, userid, kw):
     return dsl
 
 
-def query(kind, userid, size=100, **kw):
-    kind_params = ENABLED_SEARCHES.get(kind)
-    if kind_params is None:
-        return None
+def query(userid, size=100, **kw):
+    kind_params = ENABLED_SEARCHES.get('dataset')
     try:
         # Arguments received from a network request come in kw, as a mapping
         # between param_name and a list of received values.

@@ -12,7 +12,7 @@ ENABLED_SEARCHES = {
         'index': 'datasets',
         'doc_type': 'dataset',
         'owner': 'dataset.owner',
-        'private': 'dataset.private',
+        'findability': 'dataset.findability',
         'q_fields': ['dataset.title',
                      'dataset.owner',
                      'dataset.description'],
@@ -34,12 +34,11 @@ def build_dsl(kind_params, userid, kw):
     # All Datasets:
     all_datasets = {
         'bool': {
-            'should': [{'match': {kind_params['private']: False}},
+            'should': [{'match': {kind_params['findability']: 'published'}},
                        {'filtered':
                         {'filter': {'missing': {'field':
-                                                kind_params['private']}}}},
+                                                kind_params['findability']}}}},
                        ],
-            'must_not': {'match': {'loaded': False}},
             'minimum_should_match': 1
         }
     }
@@ -81,7 +80,7 @@ def build_dsl(kind_params, userid, kw):
     return dsl
 
 
-def query(userid, size=100, **kw):
+def query(userid, size=50, from_=0, **kw):
     kind_params = ENABLED_SEARCHES.get('dataset')
     try:
         # Arguments received from a network request come in kw, as a mapping
@@ -90,10 +89,16 @@ def query(userid, size=100, **kw):
         # first item.
         if type(size) is list:
             size = size[0]
+            if int(size) > 50:
+                size = 50
+        if type(from_) is list:
+            from_ = from_[0]
+
         api_params = dict([
             ('index', kind_params['index']),
             ('doc_type', kind_params['doc_type']),
-            ('size', int(size))
+            ('size', size),
+            ('from_', from_)
         ])
 
         body = build_dsl(kind_params, userid, kw)

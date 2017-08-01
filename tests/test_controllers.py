@@ -78,3 +78,15 @@ class SearchTest(unittest.TestCase):
 
     def test___search___filter_bad_value(self):
         self.assertEquals(module.search(None, {'model': ['str6'], 'dataset': ["6"]}), None)
+
+    def test___search___returns_limited_size(self):
+        self.indexSomeRecords(10)
+        self.assertEquals(len(module.search(None, {'size':['4']})), 4)
+
+    def test___search___not_allows_more_than_50(self):
+        self.indexSomeRecords(55)
+        self.assertEquals(len(module.search(None, {'size':['55']})), 50)
+
+    def test___search___returns_results_from_given_index(self):
+        self.indexSomeRecords(5)
+        self.assertEquals(len(module.search(None, {'from_':['3']})), 2)

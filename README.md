@@ -4,6 +4,16 @@
 
 A search services for DataHub
 
-## Quick start
+## Quick Start
 
-Clone the repo, install dependencies from pypi, and run the server
+# Clone the repo and install
+
+`make install`
+
+# Run tests
+
+`make test`
+
+# Run server
+
+`python server.py`

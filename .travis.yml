@@ -12,15 +12,14 @@ env:
         - DATAHUB_ELASTICSEARCH_ADDRESS=localhost:9200
 
 install:
-  - pip install --upgrade -r requirements.dev.txt
+  - make install
 
 before_script:
   - sleep 30
   - curl localhost:9200
 
 script:
-  - pylama metastore
-  - python -m pytest tests -sv --cov=metastore
+  - make test
 
 after_success:
   - coveralls

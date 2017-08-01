@@ -7,10 +7,6 @@ python:
 services:
     - elasticsearch
 
-env:
-    global:
-        - DATAHUB_ELASTICSEARCH_ADDRESS=localhost:9200
-
 install:
   - make install
 

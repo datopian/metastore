@@ -11,8 +11,6 @@ ENABLED_SEARCHES = {
     'package': {
         'index': 'packages',
         'doc_type': 'package',
-        '_source': ['id', 'model', 'package',
-                    'origin_url', 'loaded', 'last_update'],
         'owner': 'package.owner',
         'private': 'package.private',
         'q_fields': ['package.title',
@@ -67,14 +65,13 @@ def build_dsl(kind_params, userid, kw):
                 }
             })
     for k, v_arr in kw.items():
-        if k.split('.')[0] in kind_params['_source']:
-            dsl['bool']['must'].append({
-                    'bool': {
-                        'should': [{'match': {k: json.loads(v)}}
-                                   for v in v_arr],
-                        'minimum_should_match': 1
-                    }
-               })
+        dsl['bool']['must'].append({
+                'bool': {
+                    'should': [{'match': {k: json.loads(v)}}
+                               for v in v_arr],
+                    'minimum_should_match': 1
+                }
+           })
 
     if len(dsl['bool']['must']) == 0:
         del dsl['bool']['must']
@@ -102,8 +99,7 @@ def query(kind, userid, size=100, **kw):
         api_params = dict([
             ('index', kind_params['index']),
             ('doc_type', kind_params['doc_type']),
-            ('size', int(size)),
-            ('_source', kind_params['_source'])
+            ('size', int(size))
         ])
 
         body = build_dsl(kind_params, userid, kw)

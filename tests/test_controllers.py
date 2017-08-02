@@ -89,4 +89,4 @@ class SearchTest(unittest.TestCase):
 
     def test___search___returns_results_from_given_index(self):
         self.indexSomeRecords(5)
-        self.assertEquals(len(module.search(None, {'from_':['3']})), 2)
+        self.assertEquals(len(module.search(None, {'from':['3']})), 2)

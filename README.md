@@ -31,7 +31,7 @@ A search services for DataHub
 
 * q - match-all query string
 * size - number of results to return [max 50]
-* from_ - offset to start returning results from
+* from - offset to start returning results from
 
 all other parameters will be treated as filters for the query (requiring exact match of value)
 

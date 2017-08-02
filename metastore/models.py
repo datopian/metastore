@@ -11,11 +11,13 @@ ENABLED_SEARCHES = {
     'dataset': {
         'index': 'datasets',
         'doc_type': 'dataset',
-        'owner': 'dataset.owner',
-        'findability': 'dataset.findability',
-        'q_fields': ['dataset.title',
-                     'dataset.owner',
-                     'dataset.description'],
+        'owner': 'datahub.ownerid',
+        'findability': 'datahub.findability',
+        'q_fields': [
+            'title',
+            'datahub.owner',
+            'description'
+        ],
     }
 }
 
@@ -34,7 +36,7 @@ def build_dsl(kind_params, userid, kw):
     # All Datasets:
     all_datasets = {
         'bool': {
-            'should': [{'match': {kind_params['findability']: 'published'}},
+            'should': [{'match': {kind_params['findability']: False}},
                        {'filtered':
                         {'filter': {'missing': {'field':
                                                 kind_params['findability']}}}},
@@ -50,8 +52,8 @@ def build_dsl(kind_params, userid, kw):
             {'bool': {'must': {'match': {kind_params['owner']: userid}}}}
         dsl['bool']['should'].append(user_datasets)
 
-    # Query parameters
-    q = kw.get('q')
+    # Query parameters (for not to mess with other parameters we should pop)
+    q = kw.pop('q', None)
     if q is not None:
         dsl['bool']['must'].append({
                 'multi_match': {
@@ -76,11 +78,11 @@ def build_dsl(kind_params, userid, kw):
         dsl = {}
     else:
         dsl = {'query': dsl, 'explain': True}
-    # logger.info('Sending DSL %s', json.dumps(dsl))
+
     return dsl
 
 
-def query(userid, size=50, from_=0, **kw):
+def query(userid, size=50, **kw):
     kind_params = ENABLED_SEARCHES.get('dataset')
     try:
         # Arguments received from a network request come in kw, as a mapping
@@ -91,8 +93,8 @@ def query(userid, size=50, from_=0, **kw):
             size = size[0]
             if int(size) > 50:
                 size = 50
-        if type(from_) is list:
-            from_ = from_[0]
+
+        from_ = int(kw.pop('from', [0])[0])
 
         api_params = dict([
             ('index', kind_params['index']),

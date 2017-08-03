@@ -25,8 +25,7 @@ INSTALL_REQUIRES = [
     'requests',
     'pyjwt',
     'cryptography',
-    'elasticsearch>=5.0.0,<6.0.0',
-    'os-package-registry>=0.0.12'
+    'elasticsearch>=5.0.0,<6.0.0'
 ]
 TESTS_REQUIRE = [
     'pytest',

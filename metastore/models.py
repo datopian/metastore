@@ -8,20 +8,16 @@ from elasticsearch.exceptions import NotFoundError
 _engine = None
 
 ENABLED_SEARCHES = {
-    'package': {
-        'index': 'packages',
-        'doc_type': 'package',
-        '_source': ['id', 'model', 'package',
-                    'origin_url', 'loaded', 'last_update'],
-        'owner': 'package.owner',
-        'private': 'package.private',
-        'q_fields': ['package.title',
-                     'package.author',
-                     'package.owner',
-                     'package.description',
-                     'package.regionCode',
-                     'package.countryCode',
-                     'package.cityCode'],
+    'dataset': {
+        'index': 'datasets',
+        'doc_type': 'dataset',
+        'owner': 'datahub.ownerid',
+        'findability': 'datahub.findability',
+        'q_fields': [
+            'title',
+            'datahub.owner',
+            'description'
+        ],
     }
 }
 
@@ -40,12 +36,11 @@ def build_dsl(kind_params, userid, kw):
     # All Datasets:
     all_datasets = {
         'bool': {
-            'should': [{'match': {kind_params['private']: False}},
+            'should': [{'match': {kind_params['findability']: 'published'}},
                        {'filtered':
                         {'filter': {'missing': {'field':
-                                                kind_params['private']}}}},
+                                                kind_params['findability']}}}},
                        ],
-            'must_not': {'match': {'loaded': False}},
             'minimum_should_match': 1
         }
     }
@@ -57,8 +52,8 @@ def build_dsl(kind_params, userid, kw):
             {'bool': {'must': {'match': {kind_params['owner']: userid}}}}
         dsl['bool']['should'].append(user_datasets)
 
-    # Query parameters
-    q = kw.get('q')
+    # Query parameters (for not to mess with other parameters we should pop)
+    q = kw.pop('q', None)
     if q is not None:
         dsl['bool']['must'].append({
                 'multi_match': {
@@ -67,14 +62,13 @@ def build_dsl(kind_params, userid, kw):
                 }
             })
     for k, v_arr in kw.items():
-        if k.split('.')[0] in kind_params['_source']:
-            dsl['bool']['must'].append({
-                    'bool': {
-                        'should': [{'match': {k: json.loads(v)}}
-                                   for v in v_arr],
-                        'minimum_should_match': 1
-                    }
-               })
+        dsl['bool']['must'].append({
+                'bool': {
+                    'should': [{'match': {k: json.loads(v)}}
+                               for v in v_arr],
+                    'minimum_should_match': 1
+                }
+           })
 
     if len(dsl['bool']['must']) == 0:
         del dsl['bool']['must']
@@ -84,14 +78,12 @@ def build_dsl(kind_params, userid, kw):
         dsl = {}
     else:
         dsl = {'query': dsl, 'explain': True}
-    # logger.info('Sending DSL %s', json.dumps(dsl))
+
     return dsl
 
 
-def query(kind, userid, size=100, **kw):
-    kind_params = ENABLED_SEARCHES.get(kind)
-    if kind_params is None:
-        return None
+def query(userid, size=50, **kw):
+    kind_params = ENABLED_SEARCHES.get('dataset')
     try:
         # Arguments received from a network request come in kw, as a mapping
         # between param_name and a list of received values.
@@ -99,11 +91,16 @@ def query(kind, userid, size=100, **kw):
         # first item.
         if type(size) is list:
             size = size[0]
+            if int(size) > 50:
+                size = 50
+
+        from_ = int(kw.pop('from', [0])[0])
+
         api_params = dict([
             ('index', kind_params['index']),
             ('doc_type', kind_params['doc_type']),
-            ('size', int(size)),
-            ('_source', kind_params['_source'])
+            ('size', size),
+            ('from_', from_)
         ])
 
         body = build_dsl(kind_params, userid, kw)

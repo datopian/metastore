@@ -36,7 +36,7 @@ def build_dsl(kind_params, userid, kw):
     # All Datasets:
     all_datasets = {
         'bool': {
-            'should': [{'match': {kind_params['findability']: False}},
+            'should': [{'match': {kind_params['findability']: 'published'}},
                        {'filtered':
                         {'filter': {'missing': {'field':
                                                 kind_params['findability']}}}},

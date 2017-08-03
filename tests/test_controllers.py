@@ -79,7 +79,7 @@ class SearchTest(unittest.TestCase):
     def indexSomePrivateRecords(self):
         i = 0
         for owner in ['owner1', 'owner2']:
-            for private in [True, False]:
+            for private in ['published', 'else']:
                 for content in ['cat', 'dog']:
                     body = {
                         'name': '%s-%s-%s' % (owner, private, content),
@@ -174,22 +174,22 @@ class SearchTest(unittest.TestCase):
         recs = module.search(None)
         self.assertEquals(len(recs), 4)
         ids = set([r['name'] for r in recs])
-        self.assertSetEqual(ids, {'owner1-False-cat',
-                                  'owner2-False-cat',
-                                  'owner1-False-dog',
-                                  'owner2-False-dog',
+        self.assertSetEqual(ids, {'owner1-published-cat',
+                                  'owner2-published-cat',
+                                  'owner1-published-dog',
+                                  'owner2-published-dog',
                                   })
 
     def test___search___empty_authenticated_search(self):
         self.indexSomePrivateRecords()
         recs = module.search('owner1')
         ids = set([r['name'] for r in recs])
-        self.assertSetEqual(ids, {'owner1-False-cat',
-                                  'owner1-True-cat',
-                                  'owner2-False-cat',
-                                  'owner1-False-dog',
-                                  'owner1-True-dog',
-                                  'owner2-False-dog',
+        self.assertSetEqual(ids, {'owner1-published-cat',
+                                  'owner1-else-cat',
+                                  'owner2-published-cat',
+                                  'owner1-published-dog',
+                                  'owner1-else-dog',
+                                  'owner2-published-dog',
                                   })
         self.assertEquals(len(recs), 6)
 
@@ -198,8 +198,8 @@ class SearchTest(unittest.TestCase):
         recs = module.search(None, {'q': ['"cat"']})
         self.assertEquals(len(recs), 2)
         ids = set([r['name'] for r in recs])
-        self.assertSetEqual(ids, {'owner1-False-cat',
-                                  'owner2-False-cat',
+        self.assertSetEqual(ids, {'owner1-published-cat',
+                                  'owner2-published-cat',
                                   })
 
     def test___search___q_param_anonymous_search_with_param(self):
@@ -207,15 +207,15 @@ class SearchTest(unittest.TestCase):
         recs = module.search(None, {'q': ['"cat"'], 'datahub.ownerid': ['"owner1"']})
         self.assertEquals(len(recs), 1)
         ids = set([r['name'] for r in recs])
-        self.assertSetEqual(ids, {'owner1-False-cat'})
+        self.assertSetEqual(ids, {'owner1-published-cat'})
 
     def test___search___q_param_authenticated_search(self):
         self.indexSomePrivateRecords()
         recs = module.search('owner1', {'q': ['"cat"']})
         ids = set([r['name'] for r in recs])
-        self.assertSetEqual(ids, {'owner1-False-cat',
-                                  'owner1-True-cat',
-                                  'owner2-False-cat',
+        self.assertSetEqual(ids, {'owner1-published-cat',
+                                  'owner1-else-cat',
+                                  'owner2-published-cat',
                                   })
         self.assertEquals(len(recs), 3)
 

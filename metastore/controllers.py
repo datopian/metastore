@@ -7,7 +7,11 @@ def search(userid, args={}):
     """Initiate an elasticsearch query
     """
     try:
-        hits = query(userid, **args)
-        return hits
-    except elasticsearch.exceptions.ElasticsearchException:
-        return []
+        res = query(userid, **args)
+        return res
+    except elasticsearch.exceptions.ElasticsearchException as e:
+        return {
+            'total': 0,
+            'results': [],
+            'error': str(e)
+        }

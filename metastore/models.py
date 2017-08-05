@@ -9,7 +9,7 @@ _engine = None
 
 ENABLED_SEARCHES = {
     'dataset': {
-        'index': 'datasets',
+        'index': 'datahub',
         'doc_type': 'dataset',
         'owner': 'datahub.ownerid',
         'findability': 'datahub.findability',
@@ -37,9 +37,6 @@ def build_dsl(kind_params, userid, kw):
     all_datasets = {
         'bool': {
             'should': [{'match': {kind_params['findability']: 'published'}},
-                       {'filtered':
-                        {'filter': {'missing': {'field':
-                                                kind_params['findability']}}}},
                        ],
             'minimum_should_match': 1
         }
@@ -107,8 +104,19 @@ def query(userid, size=50, **kw):
         api_params['body'] = json.dumps(body)
         ret = _get_engine().search(**api_params)
         if ret.get('hits') is not None:
-            return [hit['_source'] for hit in ret['hits']['hits']]
+            results = [hit['_source'] for hit in ret['hits']['hits']]
+            total = ret['hits']['total']
+        else:
+            results = []
+            total = 0
+        return {
+            'results': results,
+            'total': total
+        }
     except (NotFoundError, json.decoder.JSONDecodeError, ValueError) as e:
         logging.error("query: %r" % e)
-        pass
-    return None
+        return {
+            'results': [],
+            'total': 0,
+            'error': str(e)
+        }

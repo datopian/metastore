@@ -5,6 +5,10 @@ import logging
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 
+
+logging.root.setLevel(logging.INFO)
+logging.getLogger('elasticsearch').setLevel(logging.DEBUG)
+
 _engine = None
 
 ENABLED_SEARCHES = {
@@ -103,6 +107,9 @@ def query(userid, size=50, **kw):
         body = build_dsl(kind_params, userid, kw)
         api_params['body'] = json.dumps(body)
         ret = _get_engine().search(**api_params)
+        logging.info('Performing query %r', kind_params)
+        logging.info('api_params %r', api_params)
+        logging.info('ret %r', ret)
         if ret.get('hits') is not None:
             results = [hit['_source'] for hit in ret['hits']['hits']]
             total = ret['hits']['total']

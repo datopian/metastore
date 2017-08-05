@@ -27,13 +27,13 @@ class SearchTest(unittest.TestCase):
         # Clean index
         self.es = Elasticsearch(hosts=[LOCAL_ELASTICSEARCH])
         try:
-            self.es.indices.delete(index='datasets')
+            self.es.indices.delete(index='datahub')
         except NotFoundError:
             pass
-        self.es.indices.create('datasets')
+        self.es.indices.create('datahub')
         mapping = {'dataset': {'properties': self.MAPPING}}
         self.es.indices.put_mapping(doc_type='dataset',
-                                    index='datasets',
+                                    index='datahub',
                                     body=mapping)
 
     def search(self, *args, **kwargs):
@@ -42,7 +42,7 @@ class SearchTest(unittest.TestCase):
         return ret['results'], ret['total']
 
     def indexSomeRecords(self, amount):
-        self.es.indices.delete(index='datasets')
+        self.es.indices.delete(index='datahub')
         for i in range(amount):
             body = {
                 'name': True,
@@ -53,8 +53,8 @@ class SearchTest(unittest.TestCase):
                     'findability': 'published'
                 }
             }
-            self.es.index('datasets', 'dataset', body)
-        self.es.indices.flush('datasets')
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
 
     def indexSomeRecordsToTestMapping(self):
         for i in range(3):
@@ -66,8 +66,8 @@ class SearchTest(unittest.TestCase):
                     'findability': 'published'
                 },
             }
-            self.es.index('datasets', 'dataset', body)
-        self.es.indices.flush('datasets')
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
 
     def indexSomeRealLookingRecords(self, amount):
         for i in range(amount):
@@ -80,8 +80,8 @@ class SearchTest(unittest.TestCase):
                 },
                 'loaded': True
             }
-            self.es.index('datasets', 'dataset', body)
-        self.es.indices.flush('datasets')
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
 
     def indexSomePrivateRecords(self):
         i = 0
@@ -98,8 +98,8 @@ class SearchTest(unittest.TestCase):
                         }
                     }
                     i += 1
-                    self.es.index('datasets', 'dataset', body)
-        self.es.indices.flush('datasets')
+                    self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
 
     # Tests
     def test___search___all_values_and_empty(self):

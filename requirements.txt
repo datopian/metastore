@@ -1,3 +1,4 @@
+requests-aws4auth
 flask
 flask-cors
 flask-jsonpify

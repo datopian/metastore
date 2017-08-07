@@ -25,7 +25,8 @@ INSTALL_REQUIRES = [
     'requests',
     'pyjwt',
     'cryptography',
-    'elasticsearch>=5.0.0,<6.0.0'
+    'elasticsearch>=5.0.0,<6.0.0',
+    'requests-aws4auth'
 ]
 TESTS_REQUIRE = [
     'pytest',

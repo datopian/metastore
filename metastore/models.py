@@ -2,8 +2,9 @@ import os
 import json
 import logging
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, RequestsHttpConnection
 from elasticsearch.exceptions import NotFoundError
+from requests_aws4auth import AWS4Auth
 
 _engine = None
 
@@ -22,13 +23,24 @@ ENABLED_SEARCHES = {
     }
 }
 
+AWS_ACCESS_KEY=os.environ.get('AWS_ACCESS_KEY')
+AWS_SECRET_KEY=os.environ.get('AWS_SECRET_KEY')
+AWS_REGION=os.environ.get('AWS_REGION', 'us-east-1')
+AWSAUTH=None
+if AWS_ACCESS_KEY and AWS_ACCESS_KEY:
+    AWSAUTH = AWS4Auth(AWS_ACCESS_KEY, AWS_SECRET_KEY, AWS_REGION, 'es')
 
 def _get_engine():
     global _engine
     if _engine is None:
         es_host = os.environ['DATAHUB_ELASTICSEARCH_ADDRESS']
-        _engine = Elasticsearch(hosts=[es_host], use_ssl='https' in es_host)
-
+        _engine = Elasticsearch(
+            hosts=[es_host],
+            http_auth=AWSAUTH,
+            use_ssl='https' in es_host,
+            verify_certs=True,
+            connection_class=RequestsHttpConnection
+        )
     return _engine
 
 

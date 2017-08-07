@@ -10,6 +10,17 @@ A search services for DataHub
 
 `make install`
 
+# Env variables
+```
+# Elastic Search address
+DATAHUB_ELASTICSEARCH_ADDRESS=
+
+# If you want to work against AWS elastic search you'll need AWS credentials
+AWS_ACCESS_KEY=<<Access Key>>
+AWS_SECRET_KEY=<<Secret Key>>
+AWS_REGION=<<Region>> (defaults to "us-east-1")
+```
+
 # Run tests
 
 `make test`

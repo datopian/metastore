@@ -278,3 +278,23 @@ class SearchTest(unittest.TestCase):
         ids = set([r['name'] for r in recs])
         self.assertSetEqual(ids, {'package-id-2'})
         self.assertEquals(len(recs), 1)
+
+    def test_search__q_param_in_readme(self):
+        body = {
+            'name': True,
+            'title': 'testing',
+            'license': 'str',
+            'datahub': {
+                'name': 'innername',
+                'findability': 'published'
+            },
+            'readme': 'text only in README',
+            'not_readme': 'NOTREADME'
+        }
+        self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
+        recs, _ = self.search(None, {'q': ['"README"']})
+        self.assertEquals(len(recs), 1)
+        ## Make sure not queries unlisted fields
+        recs, _ = self.search(None, {'q': ['"NOTREADME"']})
+        self.assertEquals(len(recs), 0)

@@ -20,7 +20,8 @@ ENABLED_SEARCHES = {
         'q_fields': [
             'title',
             'datahub.owner',
-            'description'
+            'datahub.ownerid',
+            'readme',
         ],
     }
 }

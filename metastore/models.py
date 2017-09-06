@@ -81,6 +81,9 @@ def build_dsl(kind_params, userid, kw):
     else:
         dsl = {'query': dsl, 'explain': True}
 
+    aggs = { 'total_bytes': { 'sum': { 'field': 'datahub.stats.bytes' } } }
+    dsl['aggs'] = aggs
+
     return dsl
 
 
@@ -114,17 +117,25 @@ def query(userid, size=50, **kw):
         if ret.get('hits') is not None:
             results = [hit['_source'] for hit in ret['hits']['hits']]
             total = ret['hits']['total']
+            total_bytes = ret.get('aggregations')['total_bytes']['value']
         else:
             results = []
             total = 0
+            total_bytes = 0
         return {
             'results': results,
-            'total': total
+            'summary': {
+                "total": total,
+                "totalBytes": total_bytes
+            }
         }
     except (NotFoundError, json.decoder.JSONDecodeError, ValueError) as e:
         logging.error("query: %r" % e)
         return {
             'results': [],
-            'total': 0,
+            'summary': {
+                "total": 0,
+                "totalBytes": 0
+            },
             'error': str(e)
         }

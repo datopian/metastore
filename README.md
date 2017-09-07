@@ -45,7 +45,10 @@ all other parameters will be treated as filters for the query (requiring exact m
 **Returns:** All packages that match the filter:
 ```json
 {
-  "total": total-number-of-matched-documents,
+  "summary": {
+    "total": total-number-of-matched-documents,
+    "totalBytes": total-size-of-matched-datasets
+  },
   "results": [
     list of matched documents
   ]

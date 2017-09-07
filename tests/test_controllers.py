@@ -38,8 +38,8 @@ class SearchTest(unittest.TestCase):
 
     def search(self, *args, **kwargs):
         ret = module.search(*args, **kwargs)
-        self.assertLessEqual(len(ret['results']), ret['total'])
-        return ret['results'], ret['total']
+        self.assertLessEqual(len(ret['results']), ret['summary']['total'])
+        return ret['results'], ret['summary']
 
     def indexSomeRecords(self, amount):
         self.es.indices.delete(index='datahub')
@@ -50,7 +50,10 @@ class SearchTest(unittest.TestCase):
                 'license': 'str%s' % i,
                 'datahub': {
                     'name': 'innername',
-                    'findability': 'published'
+                    'findability': 'published',
+                    'stats': {
+                        'bytes': 10
+                    }
                 }
             }
             self.es.index('datahub', 'dataset', body)
@@ -63,7 +66,10 @@ class SearchTest(unittest.TestCase):
                 'title': 'This dataset is number test%d' % i,
                 'datahub': {
                     'owner': 'BlaBla%d@test2.com' % i,
-                    'findability': 'published'
+                    'findability': 'published',
+                    'stats': {
+                        'bytes': 10
+                    }
                 },
             }
             self.es.index('datahub', 'dataset', body)
@@ -76,7 +82,10 @@ class SearchTest(unittest.TestCase):
                 'title': 'This dataset is number%d' % i,
                 'datahub': {
                     'owner': 'The one and only owner number%d' % (i+1),
-                    'findability': 'published'
+                    'findability': 'published',
+                    'stats': {
+                        'bytes': 10
+                    }
                 },
                 'loaded': True
             }
@@ -94,7 +103,10 @@ class SearchTest(unittest.TestCase):
                         'datahub': {
                             'owner': 'The one and only owner number%d' % (i+1),
                             'ownerid': owner,
-                            'findability': private
+                            'findability': private,
+                            'stats': {
+                                'bytes': 10
+                            }
                         }
                     }
                     i += 1
@@ -103,114 +115,132 @@ class SearchTest(unittest.TestCase):
 
     # Tests
     def test___search___all_values_and_empty(self):
-        self.assertEquals(self.search(None), ([], 0))
+        self.assertEquals(self.search(None), ([], {'total': 0, 'totalBytes': 0.0}))
 
     def test___search___all_values_and_one_result(self):
         self.indexSomeRecords(1)
-        res, ttl = self.search(None)
+        res, summary = self.search(None)
         self.assertEquals(len(res), 1)
-        self.assertEquals(ttl, 1)
+        self.assertEquals(summary['total'], 1)
+        self.assertEquals(summary['totalBytes'], 10)
 
     def test___search___all_values_and_two_results(self):
         self.indexSomeRecords(2)
-        res, ttl = self.search(None)
+        res, summary = self.search(None)
         self.assertEquals(len(res), 2)
-        self.assertEquals(ttl, 2)
+        self.assertEquals(summary['total'], 2)
+        self.assertEquals(summary['totalBytes'], 20)
 
     def test___search___filter_simple_property(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'license': ['"str7"']})
+        res, summary = self.search(None, {'license': ['"str7"']})
         self.assertEquals(len(res), 1)
-        self.assertEquals(ttl, 1)
+        self.assertEquals(summary['total'], 1)
+        self.assertEquals(summary['totalBytes'], 10)
 
     def test___search___filter_numeric_property(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'title': ["7"]})
+        res, summary = self.search(None, {'title': ["7"]})
         self.assertEquals(len(res), 1)
-        self.assertEquals(ttl, 1)
+        self.assertEquals(summary['total'], 1)
+        self.assertEquals(summary['totalBytes'], 10)
 
     def test___search___filter_boolean_property(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'name': ["true"]})
+        res, summary = self.search(None, {'name': ["true"]})
         self.assertEquals(len(res), 10)
-        self.assertEquals(ttl, 10)
+        self.assertEquals(summary['total'], 10)
+        self.assertEquals(summary['totalBytes'], 100)
 
     def test___search___filter_multiple_properties(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'license': ['"str6"'], 'title': ["6"]})
+        res, summary = self.search(None, {'license': ['"str6"'], 'title': ["6"]})
         self.assertEquals(len(res), 1)
-        self.assertEquals(ttl, 1)
+        self.assertEquals(summary['total'], 1)
+        self.assertEquals(summary['totalBytes'], 10)
 
     def test___search___filter_multiple_values_for_property(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'license': ['"str6"','"str7"']})
+        res, summary = self.search(None, {'license': ['"str6"','"str7"']})
         self.assertEquals(len(res), 2)
-        self.assertEquals(ttl, 2)
+        self.assertEquals(summary['total'], 2)
+        self.assertEquals(summary['totalBytes'], 20)
 
     def test___search___filter_inner_property(self):
         self.indexSomeRecords(7)
-        res, ttl = self.search(None, {"datahub.name": ['"innername"']})
+        res, summary = self.search(None, {"datahub.name": ['"innername"']})
         self.assertEquals(len(res), 7)
-        self.assertEquals(ttl, 7)
+        self.assertEquals(summary['total'], 7)
+        self.assertEquals(summary['totalBytes'], 70)
 
     def test___search___filter_no_results(self):
-        res, ttl = self.search(None, {'license': ['"str6"'], 'title': ["7"]})
+        res, summary = self.search(None, {'license': ['"str6"'], 'title': ["7"]})
         self.assertEquals(len(res), 0)
-        self.assertEquals(ttl, 0)
+        self.assertEquals(summary['total'], 0)
+        self.assertEquals(summary['totalBytes'], 0)
 
     def test___search___filter_bad_value(self):
         ret = module.search(None, {'license': ['str6'], 'title': ["6"]})
         self.assertEquals(ret['results'], [])
-        self.assertEquals(ret['total'], 0)
+        self.assertEquals(ret['summary']['total'], 0)
+        self.assertEquals(ret['summary']['totalBytes'], 0)
         self.assertIsNotNone(ret['error'])
 
     def test___search___filter_nonexistent_property(self):
         ret = module.search(None, {'license': ['str6'], 'boxing': ["6"]})
         self.assertEquals(ret['results'], [])
-        self.assertEquals(ret['total'], 0)
+        self.assertEquals(ret['summary']['total'], 0)
+        self.assertEquals(ret['summary']['totalBytes'], 0)
         self.assertIsNotNone(ret['error'])
 
     def test___search___returns_limited_size(self):
         self.indexSomeRecords(10)
-        res, ttl = self.search(None, {'size':['4']})
+        res, summary = self.search(None, {'size':['4']})
         self.assertEquals(len(res), 4)
-        self.assertEquals(ttl, 10)
+        self.assertEquals(summary['total'], 10)
+        self.assertEquals(summary['totalBytes'], 100)
 
     def test___search___not_allows_more_than_50(self):
         self.indexSomeRecords(55)
-        res, ttl = self.search(None, {'size':['55']})
+        res, summary = self.search(None, {'size':['55']})
         self.assertEquals(len(res), 50)
-        self.assertEquals(ttl, 55)
+        self.assertEquals(summary['total'], 55)
+        self.assertEquals(summary['totalBytes'], 550)
 
     def test___search___returns_results_from_given_index(self):
         self.indexSomeRecords(5)
-        res, ttl = self.search(None, {'from':['3']})
+        res, summary = self.search(None, {'from':['3']})
         self.assertEquals(len(res), 2)
-        self.assertEquals(ttl, 5)
+        self.assertEquals(summary['total'], 5)
+        self.assertEquals(summary['totalBytes'], 50)
 
     def test___search___q_param_no_recs_no_results(self):
         self.indexSomeRealLookingRecords(0)
-        res, ttl = self.search(None, {'q': ['"owner"']})
+        res, summary = self.search(None, {'q': ['"owner"']})
         self.assertEquals(len(res), 0)
-        self.assertEquals(ttl, 0)
+        self.assertEquals(summary['total'], 0)
+        self.assertEquals(summary['totalBytes'], 0)
 
     def test___search___q_param_some_recs_no_results(self):
         self.indexSomeRealLookingRecords(2)
-        res, ttl = self.search(None, {'q': ['"writer"']})
+        res, summary = self.search(None, {'q': ['"writer"']})
         self.assertEquals(len(res), 0)
-        self.assertEquals(ttl, 0)
+        self.assertEquals(summary['total'], 0)
+        self.assertEquals(summary['totalBytes'], 0)
 
     def test___search___q_param_some_recs_some_results(self):
         self.indexSomeRealLookingRecords(2)
-        res, ttl = self.search(None, {'q': ['"number1"']})
+        res, summary = self.search(None, {'q': ['"number1"']})
         self.assertEquals(len(res), 1)
-        self.assertEquals(ttl, 1)
+        self.assertEquals(summary['total'], 1)
+        self.assertEquals(summary['totalBytes'], 10)
 
     def test___search___q_param_some_recs_all_results(self):
         self.indexSomeRealLookingRecords(10)
-        res, ttl = self.search(None, {'q': ['"dataset shataset"']})
+        res, summary = self.search(None, {'q': ['"dataset shataset"']})
         self.assertEquals(len(res), 10)
-        self.assertEquals(ttl, 10)
+        self.assertEquals(summary['total'], 10)
+        self.assertEquals(summary['totalBytes'], 100)
 
     def test___search___empty_anonymous_search(self):
         self.indexSomePrivateRecords()
@@ -286,7 +316,10 @@ class SearchTest(unittest.TestCase):
             'license': 'str',
             'datahub': {
                 'name': 'innername',
-                'findability': 'published'
+                'findability': 'published',
+                'stats': {
+                    'bytes': 10
+                }
             },
             'readme': 'text only in README',
             'not_readme': 'NOTREADME'

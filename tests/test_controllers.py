@@ -201,11 +201,11 @@ class SearchTest(unittest.TestCase):
         self.assertEquals(summary['totalBytes'], 100)
 
     def test___search___not_allows_more_than_50(self):
-        self.indexSomeRecords(55)
-        res, summary = self.search(None, {'size':['55']})
-        self.assertEquals(len(res), 50)
-        self.assertEquals(summary['total'], 55)
-        self.assertEquals(summary['totalBytes'], 550)
+        self.indexSomeRecords(105)
+        res, summary = self.search(None, {'size':['105']})
+        self.assertEquals(len(res), 100)
+        self.assertEquals(summary['total'], 105)
+        self.assertEquals(summary['totalBytes'], 1050)
 
     def test___search___returns_results_from_given_index(self):
         self.indexSomeRecords(5)

@@ -96,8 +96,8 @@ def query(userid, size=50, **kw):
         # first item.
         if type(size) is list:
             size = size[0]
-            if int(size) > 50:
-                size = 50
+            if int(size) > 100:
+                size = 100
 
         from_ = int(kw.pop('from', [0])[0])
 

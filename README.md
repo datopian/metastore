@@ -37,7 +37,7 @@ Searches Elasticsearch and returns matching documents (returned document content
     - `datahub.owner`
     - `description`
 
-* size - number of results to return [max 50]
+* size - number of results to return [max 100]
 * from - offset to start returning results from
 
 all other parameters will be treated as filters for the query (requiring exact match of value)

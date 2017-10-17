@@ -1,4 +1,4 @@
-import time
+import datetime
 import unittest
 from importlib import import_module
 from elasticsearch import Elasticsearch, NotFoundError
@@ -28,6 +28,7 @@ class SearchTest(unittest.TestCase):
         self.es = Elasticsearch(hosts=[LOCAL_ELASTICSEARCH])
         try:
             self.es.indices.delete(index='datahub')
+            self.es.indices.delete(index='events')
         except NotFoundError:
             pass
         self.es.indices.create('datahub')
@@ -36,10 +37,33 @@ class SearchTest(unittest.TestCase):
                                     index='datahub',
                                     body=mapping)
 
+        self.es.indices.create('events')
+        mapping = {'event': {'properties': {'timestamp': {'type': 'date'}}}}
+        self.es.indices.put_mapping(doc_type='event',
+                                    index='events',
+                                    body=mapping)
+
     def search(self, kind, *args, **kwargs):
         ret = module.search(kind, *args, **kwargs)
         self.assertLessEqual(len(ret['results']), ret['summary']['total'])
         return ret['results'], ret['summary']
+
+    def indexSomeEventRecords(self, amount):
+        for i in range(amount):
+            body = dict(
+                timestamp=datetime.datetime(2000+i, 1, 1, 0, 0, 0),
+                event_entity='flow' if i % 3 else 'login',
+                event_action='finished' if i % 4 else 'deleted',
+                owner='datahub',
+                ownerid='datahubid',
+                dataset='dataset' + str(i),
+                status='OK',
+                messsage='',
+                findability='published' if i % 2 else 'unlisted',
+                payload={'flow-id': 'datahub/dataset'}
+            )
+            self.es.index('events', 'event', body)
+        self.es.indices.flush('events')
 
     def indexSomeRecords(self, amount):
         self.es.indices.delete(index='datahub')
@@ -113,7 +137,7 @@ class SearchTest(unittest.TestCase):
                     self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
-    # Tests
+    # Tests Datahub
     def test___search___all_values_and_empty(self):
         self.assertEquals(self.search('dataset', None), ([], {'total': 0, 'totalBytes': 0.0}))
 
@@ -331,3 +355,49 @@ class SearchTest(unittest.TestCase):
         ## Make sure not queries unlisted fields
         recs, _ = self.search('dataset', None, {'q': ['"NOTREADME"']})
         self.assertEquals(len(recs), 0)
+
+    # Tests Events
+    def test___search___all_events_are_empty(self):
+        self.assertEquals(self.search('events', None), ([], {'total': 0, 'totalBytes': 0.0}))
+
+    def test___search___all_event_are_there_but_unlisted(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', None)
+        self.assertEquals(len(res), 5)
+
+    def test___search___all_event_are_there_with_id_including_unlisted(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid')
+        self.assertEquals(len(res), 10)
+
+    def test___search___all_event_filter_with_findability(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid', {'findability': ['"unlisted"']})
+        self.assertEquals(len(res), 5)
+
+    def test___search___all_event_filter_with_action(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid', {'event_action': ['"finished"']})
+        self.assertEquals(len(res), 7)
+
+    def test___search___all_event_filter_with_entity(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid', {'event_entity': ['"flow"']})
+        self.assertEquals(len(res), 6)
+
+    def test___search___all_event_filter_with_entity_and_action(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid', {
+            'event_entity': ['"flow"'],
+            'event_action': ['"finished"']
+        })
+        self.assertEquals(len(res), 4)
+
+    def test___search___all_event_sorts_with_timestamp(self):
+        self.indexSomeEventRecords(10)
+        res, _ = self.search('events', 'datahubid')
+        self.assertEquals(res[0]['timestamp'], '2009-01-01T00:00:00')
+        self.assertEquals(res[9]['timestamp'], '2000-01-01T00:00:00')
+        res, _ = self.search('events', 'datahubid', {'sort': ['"asc"']})
+        self.assertEquals(res[0]['timestamp'], '2000-01-01T00:00:00')
+        self.assertEquals(res[9]['timestamp'], '2009-01-01T00:00:00')

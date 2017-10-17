@@ -18,7 +18,7 @@ def create():
     # Controller Proxies
     search_controller = controllers.search
 
-    def search():
+    def search(kind='dataset'):
         token = request.headers.get('auth-token') or request.values.get('jwt')
         userid = None
         try:
@@ -27,7 +27,7 @@ def create():
                 userid = token.get('userid')
         except jwt.InvalidTokenError:
             pass
-        ret = search_controller(userid, request.args)
+        ret = search_controller(kind, userid, request.args)
         if ret is None:
             abort(400)
         return jsonpify(ret)
@@ -35,6 +35,8 @@ def create():
     # Register routes
     blueprint.add_url_rule(
         'search', 'search', search, methods=['GET'])
+    blueprint.add_url_rule(
+        'search/<kind>', 'events', search, methods=['GET'])
 
     # Return blueprint
     return blueprint

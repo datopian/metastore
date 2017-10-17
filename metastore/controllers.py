@@ -3,11 +3,11 @@ import elasticsearch
 from .models import query
 
 
-def search(userid, args={}):
+def search(kind, userid, args={}):
     """Initiate an elasticsearch query
     """
     try:
-        res = query(userid, **args)
+        res = query(kind, userid, **args)
         return res
     except elasticsearch.exceptions.ElasticsearchException as e:
         return {

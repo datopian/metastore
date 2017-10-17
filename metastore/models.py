@@ -23,6 +23,14 @@ ENABLED_SEARCHES = {
             'datahub.ownerid',
             'readme',
         ],
+    },
+    'events': {
+        'index': 'events',
+        'doc_type': 'event',
+        'owner': 'ownerid',
+        'findability': 'findability',
+        'timestamp': 'timestamp',
+        'q_fields': []
     }
 }
 
@@ -54,6 +62,12 @@ def build_dsl(kind_params, userid, kw):
             {'bool': {'must': {'match': {kind_params['owner']: userid}}}}
         dsl['bool']['should'].append(user_datasets)
 
+    # Allow sorting event results
+    sort_by = kw.pop('sort', ['desc'])[0].replace('"', '')
+    sort = []
+    if kind_params.get('timestamp'):
+        sort.append({'timestamp': {'order' : sort_by}})
+
     # Query parameters (for not to mess with other parameters we should pop)
     q = kw.pop('q', None)
     if q is not None:
@@ -79,7 +93,7 @@ def build_dsl(kind_params, userid, kw):
     if len(dsl) == 0:
         dsl = {}
     else:
-        dsl = {'query': dsl, 'explain': True}
+        dsl = {'query': dsl, 'explain': True, 'sort': sort}
 
     aggs = { 'total_bytes': { 'sum': { 'field': 'datahub.stats.bytes' } } }
     dsl['aggs'] = aggs
@@ -87,8 +101,8 @@ def build_dsl(kind_params, userid, kw):
     return dsl
 
 
-def query(userid, size=50, **kw):
-    kind_params = ENABLED_SEARCHES.get('dataset')
+def query(kind, userid, size=50, **kw):
+    kind_params = ENABLED_SEARCHES.get(kind)
     try:
         # Arguments received from a network request come in kw, as a mapping
         # between param_name and a list of received values.

@@ -46,11 +46,58 @@ all other parameters will be treated as filters for the query (requiring exact m
 ```json
 {
   "summary": {
-    "total": total-number-of-matched-documents,
-    "totalBytes": total-size-of-matched-datasets
+    "total": "total-number-of-matched-documents",
+    "totalBytes": "total-size-of-matched-datasets"
   },
   "results": [
-    list of matched documents
+    "list of matched documents"
   ]
+}
+```
+
+**Endpoint:** `/metastore/search/events`
+
+**Method:** `GET`
+
+**HEADER:** `Auth-Token` (received from `/auth/check`)
+
+**Query Parameters:**
+
+* q - match-all query string
+* event_entity - flow|account|etc... (currently only `flow` is supported)
+* event_action - create|finished|deleted|etc... (currently only `finished` is supported)
+* owner - ownerid (usually hash of user's Email)
+* dataset - dataset name
+* status - OK|Not OK
+* findability - published|unlisted|private
+
+**Query Parameters for pagination and sorting:**
+* sort - desc|asc (defaults to desc)
+* size - number of results to return [max 100]
+* from - offset to start returning results from
+
+**Returns:** All packages that match the filter:
+```json
+{
+  "results": [
+    {
+      "dataset": "finance-vix",
+      "event_action": "finished",
+      "event_entity": "flow",
+      "findability": "published",
+      "messsage": "",
+      "owner": "core",
+      "ownerid": "core",
+      "status": "OK",
+      "timestamp": "2017-01-01T00:00:00.000000",
+      "payload": {
+        "flow-id": "core/finance-vix"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "totalBytes": 0
+  }
 }
 ```

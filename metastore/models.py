@@ -21,7 +21,7 @@ ENABLED_SEARCHES = {
             'title',
             'datahub.owner',
             'datahub.ownerid',
-            'readme',
+            'datapackage.readme',
         ],
     },
     'events': {
@@ -38,7 +38,8 @@ ENABLED_SEARCHES = {
 def _get_engine():
     global _engine
     if _engine is None:
-        es_host = os.environ['DATAHUB_ELASTICSEARCH_ADDRESS']
+        # es_host = os.environ['DATAHUB_ELASTICSEARCH_ADDRESS']
+        es_host = 'http://localhost:9200'
         _engine = Elasticsearch(hosts=[es_host], use_ssl='https' in es_host)
 
     return _engine

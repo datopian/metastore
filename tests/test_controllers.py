@@ -137,6 +137,30 @@ class SearchTest(unittest.TestCase):
                     self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
+    def indexSomePrivateRecordsWithReadme(self):
+        i = 0
+        for owner in ['owner1', 'owner2']:
+            for private in ['published', 'else']:
+                for content in ['cat', 'dog']:
+                    body = {
+                        'name': '%s-%s-%s' % (owner, private, content),
+                        'title': 'This dataset is number%d, content is %s' % (i, content),
+                        'datahub': {
+                            'owner': 'The one and only owner number%d' % (i + 1),
+                            'ownerid': owner,
+                            'findability': private,
+                            'stats': {
+                                'bytes': 10
+                            }
+                        },
+                        'datapackage': {
+                            'readme':'some readme text '+str(i)+' which should be searched through '
+                        }
+                    }
+                    i += 1
+                    self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
+
     # Tests Datahub
     def test___search___all_values_and_empty(self):
         self.assertEquals(self.search('dataset', None), ([], {'total': 0, 'totalBytes': 0.0}))
@@ -345,13 +369,23 @@ class SearchTest(unittest.TestCase):
                     'bytes': 10
                 }
             },
-            'readme': 'text only in README',
-            'not_readme': 'NOTREADME'
+            'datapackage': {
+                'readme': 'text only in README',
+                'not_readme': 'NOTREADME'
+            },
         }
         self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
         recs, _ = self.search('dataset', None, {'q': ['"README"']})
         self.assertEquals(len(recs), 1)
+        ## Make sure not queries unlisted fields
+        recs, _ = self.search('dataset', None, {'q': ['"NOTREADME"']})
+        self.assertEquals(len(recs), 0)
+
+    def test__search__q_param_in_readme_with_more_records(self):
+        self.indexSomePrivateRecordsWithReadme()
+        recs, _ = self.search('dataset', None, {'q': ['"readme"']})
+        self.assertEquals(len(recs), 4)
         ## Make sure not queries unlisted fields
         recs, _ = self.search('dataset', None, {'q': ['"NOTREADME"']})
         self.assertEquals(len(recs), 0)

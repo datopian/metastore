@@ -23,6 +23,9 @@ Searches Elasticsearch and returns matching documents (returned document content
 
 # API
 
+**Elasticsearch:** version 5.x should be installed, not working with newer versions
+
+
 **Endpoint:** `/metastore/search`
 
 **Method:** `GET`
@@ -35,7 +38,8 @@ Searches Elasticsearch and returns matching documents (returned document content
   Will search the following properties:
     - `title`
     - `datahub.owner`
-    - `description`
+    - `datahub.ownerid`
+    - `datapackage.readme`
 
 * size - number of results to return [max 100]
 * from - offset to start returning results from

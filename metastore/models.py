@@ -21,7 +21,7 @@ ENABLED_SEARCHES = {
             'title',
             'datahub.owner',
             'datahub.ownerid',
-            'readme',
+            'datapackage.readme',
         ],
     },
     'events': {

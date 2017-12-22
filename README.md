@@ -23,7 +23,7 @@ Searches Elasticsearch and returns matching documents (returned document content
 
 # API
 
-**Elasticsearch:** version 5.x should be installed, not working with newer versions
+**Elasticsearch:** version 5.x should be installed
 
 
 **Endpoint:** `/metastore/search`

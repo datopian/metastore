@@ -11,16 +11,59 @@ class SearchTest(unittest.TestCase):
 
     # Actions
     MAPPING = {
+        'id': {"type": "string", "analyzer": "keyword"},
+        'name': {"type": "string", "analyzer": "keyword"},
+        'title': {"type": "string", "analyzer": "simple"},
+        'description': {"type": "string", "analyzer": "standard"},
         'datahub': {
             'type': 'object',
             'properties': {
                 'owner': {
                     "type": "string",
-                    "index": "not_analyzed",
+                    "index": "not_analyzed"
+                },
+                "ownerid": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "findability": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "flowid": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "stats": {
+                    "type": "object",
+                    "properties": {
+                        "rowcount": {
+                            "type": "integer",
+                            "index": "not_analyzed"
+                        },
+                        "bytes": {
+                            "type": "integer",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }
+        },
+        'datapackage': {
+            'type': 'object',
+            'properties': {
+                'readme': {
+                    "type": "string",
+                    "analyzer": "standard",
                 }
             }
         }
     }
+
+    words = [
+        'headphones', 'ideal', 'naive', 'city', 'flirtation',
+        'annihilate', 'crypt', 'ditch', 'glacier', 'megacity'
+    ]
 
     def setUp(self):
 
@@ -84,10 +127,11 @@ class SearchTest(unittest.TestCase):
         self.es.indices.flush('datahub')
 
     def indexSomeRecordsToTestMapping(self):
+
         for i in range(3):
             body = {
                 'name': 'package-id-%d' % i,
-                'title': 'This dataset is number test%d' % i,
+                'title': 'This dataset is number test %s' % self.words[i],
                 'datahub': {
                     'owner': 'BlaBla%d@test2.com' % i,
                     'findability': 'published',
@@ -103,9 +147,9 @@ class SearchTest(unittest.TestCase):
         for i in range(amount):
             body = {
                 'name': 'package-id-%d' % i,
-                'title': 'This dataset is number%d' % i,
+                'title': 'This dataset is number %s' % self.words[i%10],
                 'datahub': {
-                    'owner': 'The one and only owner number%d' % (i+1),
+                    'owner': 'The one and only owner number %s' % (self.words[(i+1)%10]),
                     'findability': 'published',
                     'stats': {
                         'bytes': 10
@@ -278,7 +322,7 @@ class SearchTest(unittest.TestCase):
 
     def test___search___q_param_some_recs_some_results(self):
         self.indexSomeRealLookingRecords(2)
-        res, summary = self.search('dataset', None, {'q': ['"number1"']})
+        res, summary = self.search('dataset', None, {'q': ['"ideal"']})
         self.assertEquals(len(res), 1)
         self.assertEquals(summary['total'], 1)
         self.assertEquals(summary['totalBytes'], 10)
@@ -342,7 +386,7 @@ class SearchTest(unittest.TestCase):
 
     def test___search___q_param_with_similar_param(self):
         self.indexSomeRecordsToTestMapping()
-        recs, _ = self.search('dataset', None, {'q': ['"test2"']})
+        recs, _ = self.search('dataset', None, {'q': ['"naive"']})
         ids = set([r['name'] for r in recs])
         self.assertSetEqual(ids, {'package-id-2'})
         self.assertEquals(len(recs), 1)

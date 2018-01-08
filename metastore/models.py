@@ -34,6 +34,13 @@ ENABLED_SEARCHES = {
     }
 }
 
+BOOSTS = {
+    'title': '^5',
+    'datahub.owner': '',
+    'datahub.ownerid': '',
+    'datapackage.readme': '^2',
+}
+
 
 def _get_engine():
     global _engine
@@ -74,7 +81,7 @@ def build_dsl(kind_params, userid, kw):
         dsl['bool']['must'].append({
                 'multi_match': {
                     'query': json.loads(q[0]),
-                    'fields': kind_params['q_fields']
+                    'fields': [f+(BOOSTS.get(f, '')) for f in kind_params['q_fields']]
                 }
             })
     for k, v_arr in kw.items():

@@ -205,6 +205,26 @@ class SearchTest(unittest.TestCase):
                     self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
+    def indexMultipleUserRecords(self):
+        for owner in ['core', 'anonymous', 'friend', 'other']:
+            body = {
+                'name': '%s-dataset' % owner,
+                'title': 'This dataset is owned by %s' % owner,
+                'datahub': {
+                    'owner': 'Example',
+                    'ownerid': owner,
+                    'findability': 'published',
+                    'stats': {
+                        'bytes': 10
+                    }
+                },
+                'datapackage': {
+                    'readme':'some readme text which should be searched through '
+                }
+            }
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
+
     # Tests Datahub
     def test___search___all_values_and_empty(self):
         self.assertEquals(self.search('dataset', None), ([], {'total': 0, 'totalBytes': 0.0}))
@@ -433,6 +453,12 @@ class SearchTest(unittest.TestCase):
         ## Make sure not queries unlisted fields
         recs, _ = self.search('dataset', None, {'q': ['"NOTREADME"']})
         self.assertEquals(len(recs), 0)
+
+    def test__search__q_core_gets_prefered(self):
+        self.indexMultipleUserRecords()
+        recs, _ = self.search('dataset', None, {'q': ['"readme"']})
+        self.assertEquals(len(recs), 4)
+        self.assertEquals(recs[0]['name'], 'core-dataset')
 
     # Tests Events
     def test___search___all_events_are_empty(self):

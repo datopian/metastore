@@ -52,7 +52,9 @@ def _get_engine():
 
 
 def build_dsl(kind_params, userid, kw):
-    dsl = {'bool': {'should': [], 'must': [], 'minimum_should_match': 1}}
+    dsl = {'bool': {
+        'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 2}}}],
+        'must': [], 'minimum_should_match': 1}}
     # All Datasets:
     all_datasets = {
         'bool': {

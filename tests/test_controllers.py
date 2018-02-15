@@ -227,6 +227,26 @@ class SearchTest(unittest.TestCase):
                 self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
+    def indexWithStopWords(self):
+        for ind, title in enumerate(['the Mauna Loa', 'Mauna Loa', 'The United States']):
+            body = {
+                'name': '%s-dataset' % id,
+                'title': title,
+                'datahub': {
+                    'owner': 'Example',
+                    'ownerid': '%s-owner',
+                    'findability': 'published',
+                    'stats': {
+                        'bytes': 10
+                    }
+                },
+                'datapackage': {
+                    'readme':'some readme text which should be searched through '
+                }
+            }
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
+
     # Tests Datahub
     def test___search___all_values_and_empty(self):
         self.assertEquals(self.search('dataset', None), ([], {'total': 0, 'totalBytes': 0.0}))
@@ -349,13 +369,6 @@ class SearchTest(unittest.TestCase):
         self.assertEquals(summary['total'], 1)
         self.assertEquals(summary['totalBytes'], 10)
 
-    def test___search___q_param_some_recs_all_results(self):
-        self.indexSomeRealLookingRecords(10)
-        res, summary = self.search('dataset', None, {'q': ['"dataset shataset"']})
-        self.assertEquals(len(res), 10)
-        self.assertEquals(summary['total'], 10)
-        self.assertEquals(summary['totalBytes'], 100)
-
     def test___search___empty_anonymous_search(self):
         self.indexSomePrivateRecords()
         recs, _ = self.search('dataset', None)
@@ -461,6 +474,12 @@ class SearchTest(unittest.TestCase):
         recs, _ = self.search('dataset', None, {'q': ['"readme"']})
         self.assertEquals(len(recs), 4)
         self.assertEquals(recs[0]['name'], 'core-dataset')
+
+    def test__search__q_ignore_stop_words(self):
+        self.indexWithStopWords()
+        recs, _ = self.search('dataset', None, {'q': ['"the Mauna Loa"']})
+        self.assertEquals(len(recs), 1)
+
 
     # Tests Events
     def test___search___all_events_are_empty(self):

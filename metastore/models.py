@@ -90,7 +90,8 @@ def build_dsl(kind_params, userid, kw):
         dsl['bool']['must'].append({
                 'multi_match': {
                     'query': json.loads(q[0]),
-                    'fields': [f+(BOOSTS.get(f, '')) for f in kind_params['q_fields']]
+                    'fields': [f+(BOOSTS.get(f, '')) for f in kind_params['q_fields']],
+                    'type': 'phrase'
                 }
             })
     for k, v_arr in kw.items():

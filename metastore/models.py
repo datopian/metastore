@@ -53,17 +53,24 @@ def _get_engine():
 
 def build_dsl(kind_params, userid, kw):
     dsl = {'bool': {
-        'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 2}}}],
+        'should': [],
         'must': [], 'minimum_should_match': 1}}
     # All Datasets:
     all_datasets = {
         'bool': {
-            'should': [{'match': {kind_params['findability']: 'published'}},
-                       ],
+            'should': [{'match': {kind_params['findability']: 'published'}}],
+            'minimum_should_match': 1
+        }
+    }
+    boost_core = {
+        'bool': {
+            'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 2}}}],
+            'must': [{'match': {kind_params['findability']: 'published'}}],
             'minimum_should_match': 1
         }
     }
     dsl['bool']['should'].append(all_datasets)
+    dsl['bool']['should'].append(boost_core)
 
     # User datasets
     if userid is not None:

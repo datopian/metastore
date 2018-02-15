@@ -207,22 +207,24 @@ class SearchTest(unittest.TestCase):
 
     def indexMultipleUserRecords(self):
         for owner in ['core', 'anonymous', 'friend', 'other']:
-            body = {
-                'name': '%s-dataset' % owner,
-                'title': 'This dataset is owned by %s' % owner,
-                'datahub': {
-                    'owner': 'Example',
-                    'ownerid': owner,
-                    'findability': 'published',
-                    'stats': {
-                        'bytes': 10
+            for findability in ['published', 'unlisted', 'private']:
+
+                body = {
+                    'name': '%s-dataset' % owner,
+                    'title': 'This dataset is owned by %s' % owner,
+                    'datahub': {
+                        'owner': 'Example',
+                        'ownerid': owner,
+                        'findability': findability,
+                        'stats': {
+                            'bytes': 10
+                        }
+                    },
+                    'datapackage': {
+                        'readme':'some readme text which should be searched through '
                     }
-                },
-                'datapackage': {
-                    'readme':'some readme text which should be searched through '
                 }
-            }
-            self.es.index('datahub', 'dataset', body)
+                self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
     # Tests Datahub

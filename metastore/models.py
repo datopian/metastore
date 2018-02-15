@@ -64,7 +64,7 @@ def build_dsl(kind_params, userid, kw):
     }
     boost_core = {
         'bool': {
-            'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 2}}}],
+            'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 4}}}],
             'must': [{'match': {kind_params['findability']: 'published'}}],
             'minimum_should_match': 1
         }

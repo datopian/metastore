@@ -13,8 +13,8 @@ class SearchTest(unittest.TestCase):
     MAPPING = {
         'id': {"type": "string", "analyzer": "keyword"},
         'name': {"type": "string", "analyzer": "keyword"},
-        'title': {"type": "string", "analyzer": "simple"},
-        'description': {"type": "string", "analyzer": "standard"},
+        'title': {"type": "string", "analyzer": "english"},
+        'description': {"type": "string", "analyzer": "english"},
         'datahub': {
             'type': 'object',
             'properties': {
@@ -54,7 +54,7 @@ class SearchTest(unittest.TestCase):
             'properties': {
                 'readme': {
                     "type": "string",
-                    "analyzer": "standard",
+                    "analyzer": "english",
                 }
             }
         }
@@ -478,7 +478,7 @@ class SearchTest(unittest.TestCase):
     def test__search__q_ignore_stop_words(self):
         self.indexWithStopWords()
         recs, _ = self.search('dataset', None, {'q': ['"the Mauna Loa"']})
-        self.assertEquals(len(recs), 1)
+        self.assertEquals(len(recs), 2)
 
 
     # Tests Events

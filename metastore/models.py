@@ -64,7 +64,7 @@ def build_dsl(kind_params, userid, kw):
     }
     boost_core = {
         'bool': {
-            'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 4}}}],
+            'should': [{ "match": { "datahub.ownerid": {"query": "core", "boost": 4.5}}}],
             'must': [{'match': {kind_params['findability']: 'published'}}],
             'minimum_should_match': 1
         }
@@ -90,7 +90,8 @@ def build_dsl(kind_params, userid, kw):
         dsl['bool']['must'].append({
                 'multi_match': {
                     'query': json.loads(q[0]),
-                    'fields': [f+(BOOSTS.get(f, '')) for f in kind_params['q_fields']]
+                    'fields': [f+(BOOSTS.get(f, '')) for f in kind_params['q_fields']],
+                    'type': 'most_fields'
                 }
             })
     for k, v_arr in kw.items():
@@ -135,7 +136,8 @@ def query(kind, userid, size=50, **kw):
             ('index', kind_params['index']),
             ('doc_type', kind_params['doc_type']),
             ('size', size),
-            ('from_', from_)
+            ('from_', from_),
+            ('search_type', 'dfs_query_then_fetch')
         ])
 
         body = build_dsl(kind_params, userid, kw)

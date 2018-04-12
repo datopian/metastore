@@ -247,6 +247,26 @@ class SearchTest(unittest.TestCase):
             self.es.index('datahub', 'dataset', body)
         self.es.indices.flush('datahub')
 
+    def indexWithCustomText(self, data=[]):
+        for ind, entry in enumerate(data):
+            body = {
+                'name': entry.get('name', '%s-dataset' % ind),
+                'title': entry.get('title', '%s-title' % ind),
+                'datahub': {
+                    'owner': entry.get('owner', '%s-owner' % ind),
+                    'ownerid': entry.get('ownerid', '%s-ownerid' % ind),
+                    'findability': entry.get('findability', 'published'),
+                    'stats': {
+                        'bytes': 10
+                    }
+                },
+                'datapackage': {
+                    'readme': entry.get('readme', '%s-readme' % ind)
+                }
+            }
+            self.es.index('datahub', 'dataset', body)
+        self.es.indices.flush('datahub')
+
     # Tests Datahub
     def test___search___all_values_and_empty(self):
         self.assertEquals(self.search('dataset', None), ([], {'total': 0, 'totalBytes': 0.0}))
@@ -479,6 +499,33 @@ class SearchTest(unittest.TestCase):
         self.indexWithStopWords()
         recs, _ = self.search('dataset', None, {'q': ['"the Mauna Loa"']})
         self.assertEquals(len(recs), 2)
+
+    def test__search__q_consider_exact_match(self):
+        data = [
+            {
+                'title': 'List of all countries with their 2 digit codes (ISO 3166-1)',
+                'owner': 'core',
+                'ownerid': 'core',
+                'readme': 'country country_codes country list country country_codes.html  list lists list list'
+            },
+            {
+                'title': 'Nasdaq Listings',
+                'owner': 'core',
+                'ownerid': 'core',
+                'readme': 'list list list list'
+            },
+            {
+                'title': 'Country and Continent Codes List',
+                'owner': 'not-core',
+                'ownerid': 'not-core',
+                'readme': 'country list list'
+            },
+        ]
+        self.indexWithCustomText(data)
+        recs, _ = self.search('dataset' , None, {'q': ['"list of countries"']})
+        self.assertEquals(len(recs), 3)
+        self.assertEquals(recs[0]['title'], 'List of all countries with their 2 digit codes (ISO 3166-1)')
+        self.assertEquals(recs[1]['title'], 'Country and Continent Codes List')
 
 
     # Tests Events

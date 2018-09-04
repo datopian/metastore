@@ -10,7 +10,7 @@ module = import_module('metastore.controllers')
 class SearchTest(unittest.TestCase):
 
     # Actions
-    MAPPING = {
+    DATAHUB_MAPPING = {
         'id': {"type": "string", "analyzer": "keyword"},
         'name': {"type": "string", "analyzer": "keyword"},
         'title': {"type": "string", "analyzer": "english"},
@@ -60,6 +60,13 @@ class SearchTest(unittest.TestCase):
         }
     }
 
+    EVENTS_MAPPING = {
+        'timestamp': {'type': 'date'},
+        'dataset': {"type": "string", "analyzer": "keyword"},
+        'owner': {"type": "string", "analyzer": "keyword"},
+        'ownerid': {"type": "string", "analyzer": "keyword"}
+    }
+
     words = [
         'headphones', 'ideal', 'naive', 'city', 'flirtation',
         'annihilate', 'crypt', 'ditch', 'glacier', 'megacity'
@@ -75,13 +82,13 @@ class SearchTest(unittest.TestCase):
         except NotFoundError:
             pass
         self.es.indices.create('datahub')
-        mapping = {'dataset': {'properties': self.MAPPING}}
+        mapping = {'dataset': {'properties': self.DATAHUB_MAPPING}}
         self.es.indices.put_mapping(doc_type='dataset',
                                     index='datahub',
                                     body=mapping)
 
         self.es.indices.create('events')
-        mapping = {'event': {'properties': {'timestamp': {'type': 'date'}}}}
+        mapping = {'event': {'properties': self.EVENTS_MAPPING}}
         self.es.indices.put_mapping(doc_type='event',
                                     index='events',
                                     body=mapping)
@@ -104,6 +111,23 @@ class SearchTest(unittest.TestCase):
                 messsage='',
                 findability='published' if i % 2 else 'unlisted',
                 payload={'flow-id': 'datahub/dataset'}
+            )
+            self.es.index('events', 'event', body)
+        self.es.indices.flush('events')
+
+    def indexEventRecordsWithDatasets(self, datasets):
+        for dataset in datasets:
+            body = dict(
+                timestamp=datetime.datetime(2000, 1, 1, 0, 0, 0),
+                event_entity='flow',
+                event_action='finished',
+                owner='datahub',
+                ownerid='datahubid',
+                dataset=dataset,
+                status='OK',
+                messsage='',
+                findability='published',
+                payload={'flow-id': 'datahub/%s' % dataset}
             )
             self.es.index('events', 'event', body)
         self.es.indices.flush('events')
@@ -573,3 +597,13 @@ class SearchTest(unittest.TestCase):
         res, _ = self.search('events', 'datahubid', {'sort': ['"asc"']})
         self.assertEquals(res[0]['timestamp'], '2000-01-01T00:00:00')
         self.assertEquals(res[9]['timestamp'], '2009-01-01T00:00:00')
+
+    def test___search___events_match_only_exact_keywords(self):
+        datasets = ['co2-fossil-by-nation', 'co2-fossil-global', 'co2-ppm']
+        self.indexEventRecordsWithDatasets(datasets)
+        res, _ = self.search('events', 'datahubid', {
+            'dataset': ['"co2-ppm"']
+        })
+
+        self.assertEquals(len(res), 1)
+        self.assertEquals(res[0]['dataset'], 'co2-ppm')

@@ -97,7 +97,7 @@ def build_dsl(kind_params, userid, kw):
     for k, v_arr in kw.items():
         dsl['bool']['must'].append({
                 'bool': {
-                    'should': [{'match': {k: json.loads(v)}}
+                    'should': [{'term': {k: json.loads(v)}}
                                for v in v_arr],
                     'minimum_should_match': 1
                 }

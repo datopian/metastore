@@ -36,7 +36,7 @@ ENABLED_SEARCHES = {
 
 BOOSTS = {
     'title': '^5',
-    'datahub.owner': '',
+    'datahub.owner': '^2',
     'datahub.ownerid': '',
     'datapackage.readme': '^2',
 }
@@ -51,7 +51,7 @@ def _get_engine():
     return _engine
 
 
-def build_dsl(kind_params, userid, kw):
+def build_dsl(kind_params, userid, kw, kind=None):
     dsl = {'bool': {
         'should': [],
         'must': [], 'minimum_should_match': 1}}
@@ -94,10 +94,11 @@ def build_dsl(kind_params, userid, kw):
                     'type': 'most_fields'
                 }
             })
+    match_or_term = 'term' if kind == 'events' else 'match'
     for k, v_arr in kw.items():
         dsl['bool']['must'].append({
                 'bool': {
-                    'should': [{'term': {k: json.loads(v)}}
+                    'should': [{match_or_term: {k: json.loads(v)}}
                                for v in v_arr],
                     'minimum_should_match': 1
                 }
@@ -140,7 +141,7 @@ def query(kind, userid, size=50, **kw):
             ('search_type', 'dfs_query_then_fetch')
         ])
 
-        body = build_dsl(kind_params, userid, kw)
+        body = build_dsl(kind_params, userid, kw, kind=kind)
         api_params['body'] = json.dumps(body)
         ret = _get_engine().search(**api_params)
         logging.info('Performing query %r', kind_params)

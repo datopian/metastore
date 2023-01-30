@@ -8,6 +8,7 @@ Searches Elasticsearch and returns matching documents (returned document content
 
 ## Quick Start
 
+
 # Clone the repo and install
 
 `make install`
